@@ -7,18 +7,28 @@ from turns import results
 import smartParking
 import datetime
 import math
+import sys
+import setup
 
+log = ""
 open = [[0,133,0,0,'b'], [0,120,0,0,'b'], [160,0,-90,0,'d'], [955,0,-90,0,'e'], [975,0,-90,0,'e'], [1180,105,180,0,'g'], [1180,485,180,0,'l'], [0,845,0,0,'m']]
 close = ['v','w','x','y','z']
 
+set = setup.makeparams("./testsuite/"+sys.argv[1])
+log += sys.argv[1]+","
+destinationsStay = set[0]
+speeds = set[1]
+choices = set[2]
+destinationsThrough = set[3]
 
 start = []
 destinations = []
 for i in range(len(choices)):
     start.append(open[choices[i]])
-    start.append(open[choices[len(choices)-i-1]])
+for i in range(len(destinationsStay)):
     destinations.append(destinationsStay[i])
     destinations.append(destinationsThrough[i])
+
 _image_library = {}
 def get_image(path):
         global _image_library
@@ -49,6 +59,16 @@ for i in range(len(start)):
         park.append([])
         path.append(temp)
         k.append(0)
+
+for i in range(len(start)):
+    if start[i][4] == 'e' and path[i][0] == 14:
+        start[i] = open[3]
+    if start[i][4] == 'e' and (path[i][0] == 12 or path[i][0] == 13):
+        start[i] = open[4]
+    if start[i][4] == 'b' and path[i][0] == 0:
+        start[i] = open[0]
+    if start[i][4] == 'b' and (path[i][0] == 1 or path[i][0] == 2):
+        start[i] = open[1]
 # print(len(start))
 # print(len(park))
 # print(len(path))
@@ -63,7 +83,7 @@ while not done:
         for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                         done = True
-        if counter%10 == 0:
+        if counter%20 == 0:# and counter < 10:
             if len(start) > 0:
                 running.append(start.pop(0))
         screen.fill((255, 255, 255))
@@ -75,14 +95,14 @@ while not done:
                 sprite[i] = pygame.transform.rotate(sprite[i], running[i][2])
                 screen.blit(sprite[i], (running[i][0], running[i][1]))
                 if k[i] < len(path[i]):
-                    running[i] = GPS(running[i], path[i][k[i]], running, counter,speeds[3])
+                    running[i] = GPS(running[i], path[i][k[i]], running, counter,speeds[i])
                     if running[i][3] == -1:
                         running[i][3] = 0
                         k[i] = k[i] + 1
                 else:
-                    running[i] = parking(running[i], running, park[i],speeds[3])
+                    running[i] = parking(running[i], running, park[i],speeds[i])
                     if(running[i][3] == -1):
-                        travelTimeB.append(counter - (i*10))
+                        travelTimeB.append(counter - (i*20))
                         running[i][3] = 100
 
             else:
@@ -90,7 +110,7 @@ while not done:
                 sprite[i] = pygame.transform.rotate(sprite[i], running[i][2])
                 screen.blit(sprite[i], (running[i][0], running[i][1]))
                 if k[i] < len(path[i]):
-                    running[i] = GPS(running[i], path[i][k[i]], running, counter,speeds[3])
+                    running[i] = GPS(running[i], path[i][k[i]], running, counter,speeds[i])
                     if running[i][3] == -1 and k[i] == len(path[i]) - 1:
                         travelTimeR.append(counter - (i*10))
                     if running[i][3] == -1:
@@ -130,15 +150,17 @@ for i in range(len(running)):
     if i%2 == 0:
         metric.append(running[i])
         blueCars.append(running[i])
-print("Blue car locations:")
-print(blueCars)
-# print(len(blueCars))
-# print(len(metric))
-print("Total time units for all cars to be parked: " + str(counter))
+spots = str(blueCars)
+# log += "Blue car locations:\n"
+# log += str(blueCars)
+# log += "\nTotal time units for all cars to be parked: " + str(counter)+"\n"
+log += str(counter)+","
 avgTB = sum(travelTimeB)/len(travelTimeB)
-print("The average travel time units from when the car enters the screen to when it is parked: "+ str(avgTB))
+# log += "The average travel time units from when the car enters the screen to when it is parked: "+ str(avgTB) +"\n"
+log += str(avgTB)+","
 avgTR = sum(travelTimeR)/len(travelTimeR)
-print("The average travel time units from when the car enters the screen to when it leaves the screen: "+ str(avgTR))
+# log += "The average travel time units from when the car enters the screen to when it leaves the screen: "+str(avgTR)+"\n"
+log += str(avgTR)+","
 total = 0
 for j in range(len(metric)):
     x1 = metric[j][0]
@@ -148,5 +170,9 @@ for j in range(len(metric)):
     distance = math.sqrt((x1-x2)**2+(y1-y2)**2)
     total = total + distance
 avgD = total/len(metric)
-print("The average distance from parking spot to destination: " + str(avgD))
-results()
+# log += "The average distance from parking spot to destination: " + str(avgD)+"\n"
+log += str(avgD)+","
+log += results()
+# print(log)
+# setup.writeresults(spots + "\n")
+setup.writeresults(log + "\n")

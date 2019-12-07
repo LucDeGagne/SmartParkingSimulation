@@ -155,7 +155,7 @@ def somWtobankS1left(check):
 
 def somEclump1(x,y,check):
     for j in range(len(check)):
-        if check[j][0] == 740 and check[j][1] ==  120:
+        if (check[j][0] > 730 and check[j][0] < 745) and (check[j][1] >  115 and check[j][1] <  125):
             global intersectionBrakes
             intersectionBrakes[2-1] += 1
             return False
@@ -163,7 +163,7 @@ def somEclump1(x,y,check):
 
 def somEclump2(x,y,check):
     for j in range(len(check)):
-        if check[j][0] == 440 and check[j][1] ==  115:
+        if (check[j][0] > 430 and check[j][0] < 445) and (check[j][1] >  110 and check[j][1] <  120):
             global intersectionBrakes
             intersectionBrakes[2-1] += 1
             return False
@@ -1075,8 +1075,8 @@ def conS_macW(x,y,a,p,running,speed):
                 a = a - 5
         else:
             p = 2
-    if p == 2 and west(x,y,running,4):
-        if x != 910:
+    if p == 2 and west(x,y,running,4) and conStomacWturn(running):
+        if x != 920:
             x = x - speed
         else:
             p = 3
@@ -1220,10 +1220,13 @@ def gilE_gilE6(x,y,a,p,running,c,speed):
     return [x,y,a,p]
 
 def wrap_around(x,y,a,p,running,c,speed):
+
     if p == 0 and east(x,y,running,-1):
         if x != 960 or a != -90:
-            if x != 960:
+            if x < 960:
                 x = x + speed
+            if x > 960:
+                x = x - speed
             if a != -90 and x >= 920:
                 a =  a - 5
         else:
@@ -1478,6 +1481,7 @@ def stallsWest(x,y,a,p,l,running,park,speed):
 
 
 def results():
-    print("The total turns made by all cars: " + str(turnsMade))
-    print("Average number of turns per car: " + str(turnsMade/440))
-    print("Intersection braking: "+str(intersectionBrakes))
+    res = str(turnsMade) +","+str(turnsMade/440)
+    for i in range(len(intersectionBrakes)):
+        res += ","+str(intersectionBrakes[i])
+    return res
